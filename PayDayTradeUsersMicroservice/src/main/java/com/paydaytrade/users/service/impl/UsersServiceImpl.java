@@ -143,7 +143,7 @@ public class UsersServiceImpl implements UsersService {
 				if (order.getQuantity() <= buyQuantity) {
 					buyQuantity = order.getQuantity();
 				}
-				cash = cash - buyQuantity * stock.getPrice();
+				cash -= buyQuantity * stock.getPrice();
 				String cashStrFormatted = new DecimalFormat(".##").format(cash);
 				cash = Double.valueOf(cashStrFormatted);
 				userEntity.setCash(cash);
@@ -155,10 +155,9 @@ public class UsersServiceImpl implements UsersService {
 				stocksServiceClient.saveStock(stockOrder);
 				UserEntity userEntityUpdated = usersRepository.save(userEntity);
 			} catch (Exception e) {
+				logger.error(e.getLocalizedMessage());
 				order.setQuantity(0);
 			}
-
-			
 		} else {
 			order.setQuantity(0);
 		}
@@ -168,8 +167,34 @@ public class UsersServiceImpl implements UsersService {
 
 	@Override
 	public StockOrderModel sellStock(String userId, StockOrderModel order) {
-		// TODO Auto-generated method stub
-		return null;
+		StockOrderModel stock = getStockBySymbol(order.getSymbol());
+		if (order.getPrice() <= stock.getPrice()) {
+			try {
+				final UserEntity userEntity = usersRepository.findByUserId(userId);
+				Double cash = userEntity.getCash();
+				StockUserResponseModel userStock = 
+						stocksServiceClient.getStockByUserIdAndSymbol(userId, order.getSymbol());
+				int sellQuantity = order.getQuantity() > userStock.getQuantity() ?
+								userStock.getQuantity() : order.getQuantity();
+				cash += sellQuantity * stock.getPrice();
+				String cashStrFormatted = new DecimalFormat(".##").format(cash);
+				cash = Double.valueOf(cashStrFormatted);
+				userEntity.setCash(cash);				
+				order.setQuantity(-1 * sellQuantity);
+				order.setPrice(stock.getPrice());
+				StockOrderClientModel stockOrder = modelMapper.map(order, StockOrderClientModel.class);
+				stockOrder.setUserId(userId);
+				stocksServiceClient.saveStock(stockOrder);
+				UserEntity userEntityUpdated = usersRepository.save(userEntity);
+			} catch (Exception e) {
+				logger.error(e.getLocalizedMessage());
+				order.setQuantity(0);
+			}
+		} else {
+			order.setQuantity(0);
+		}
+		
+		return order;
 	}
 	
 	

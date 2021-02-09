@@ -63,8 +63,6 @@ public class StocksServiceImpl implements StocksService {
 
 	@Override
 	public StockOrderClientModel saveStock(StockOrderClientModel stockOrder) {
-		// TODO Auto-generated method stub
-		
 		// Check if update or save
 		StockEntity stockEntity = null;
 		List<StockEntity> stocksByUserId = stocksRepository.findByUserId(stockOrder.getUserId());
@@ -89,11 +87,9 @@ public class StocksServiceImpl implements StocksService {
 			stockEntity.setSymbol(stockOrder.getSymbol());
 		}
 		
-//		FIXME StockEntity stockEntity = modelMapper.map(stockOrder, StockEntity.class);
 		StockEntity savedStockEntity = stocksRepository.save(stockEntity);
-		StockOrderClientModel stockClient = modelMapper.map(savedStockEntity, StockOrderClientModel.class);
 		
-		return stockClient;
+		return modelMapper.map(savedStockEntity, StockOrderClientModel.class);
 	}
  
 
